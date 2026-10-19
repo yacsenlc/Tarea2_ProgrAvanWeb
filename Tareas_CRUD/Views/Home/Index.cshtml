@@ -1,0 +1,215 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4"></h1>
+
+</div>
+
+
+<h2>Nueva tarea</h2>
+<h2></h2>
+
+<div>
+    <label>Título:</label>
+    <input type="text" id="txttitulo" class="form-control" />
+
+    <label>Descripcion:</label>
+    <input type="text" id="txtdescripcion" class="form-control" required maxlength="100" />
+
+    <label for="txtestado">Estado:</label>
+    <select id="txtestado" class="form-control" required>
+        <option value="">Seleccione un estado</option>
+        <option value="En proceso">En proceso</option>
+        <option value="Completado">Completado</option>
+    </select>
+
+    <br />
+
+    <button type="button" onclick="agregar()"
+            class="btn btn-success">
+        Agregar
+    </button>
+
+    <button type="button" onclick="actualizar()"
+            class="btn btn-warning">
+        Actualizar
+    </button>
+
+    <button type="button" onclick="eliminar()"
+            class="btn btn-danger">
+        Eliminar
+    </button>
+
+    <button type="button" onclick="limpiar()"
+            class="btn btn-primary">
+        Limpiar
+    </button>
+</div>
+
+<hr />
+
+<h3>Mis tareas</h3>
+
+<label for="buscarTarea">Buscar tarea:</label>
+<input type="text"
+       id="buscarTarea"
+       class="form-control"
+       placeholder="Buscar por título, descripción o estado..." />
+
+<br />
+
+<table class="table table-bordered" id="dgvClientes">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+
+
+
+    let clientes = JSON.parse(sessionStorage.getItem("clientes")) || [];
+    let indiceSeleccionado = -1;
+
+    // Mostrar los datos al cargar la página
+    document.addEventListener("DOMContentLoaded", mostrar);
+    document.getElementById("buscarTarea").addEventListener("input", mostrar);
+
+    function guardarSession() {
+        sessionStorage.setItem("clientes", JSON.stringify(clientes));
+    }
+
+    function agregar() {
+        if (!validarDatos()) return;
+
+        const titulo = document.getElementById("txttitulo").value.trim();
+        const descripcion = document.getElementById("txtdescripcion").value.trim();
+        const estado = document.getElementById("txtestado").value;
+
+        clientes.push({
+            id: Date.now(),
+            titulo,
+            descripcion,
+            estado
+        });
+
+        guardarSession();
+        mostrar();
+        limpiar();
+    }
+
+
+
+
+    function mostrar() {
+        const tabla = document.querySelector("#dgvClientes tbody");
+        const busqueda = document.getElementById("buscarTarea")
+            .value.trim().toLowerCase();
+
+        tabla.innerHTML = "";
+
+        clientes.forEach((c, index) => {
+            const coincide =
+                c.titulo.toLowerCase().includes(busqueda) ||
+                c.descripcion.toLowerCase().includes(busqueda) ||
+                c.estado.toLowerCase().includes(busqueda);
+
+            if (coincide) {
+                const fila = document.createElement("tr");
+                fila.style.cursor = "pointer";
+
+                [c.titulo, c.descripcion, c.estado].forEach(valor => {
+                    const celda = document.createElement("td");
+                    celda.textContent = valor;
+                    fila.appendChild(celda);
+                });
+
+                fila.addEventListener("click", () => seleccionar(index));
+                tabla.appendChild(fila);
+            }
+        });
+    }
+
+
+
+    function seleccionar(index) {
+        indiceSeleccionado = index;
+        const cliente = clientes[index];
+
+        document.getElementById("txttitulo").value = cliente.titulo;
+        document.getElementById("txtdescripcion").value = cliente.descripcion;
+        document.getElementById("txtestado").value = cliente.estado;
+    }
+
+    function actualizar() {
+        if (indiceSeleccionado === -1) {
+            alert("Seleccione una tarea para actualizar.");
+            return;
+        }
+
+        if (!validarDatos()) return;
+
+        clientes[indiceSeleccionado].titulo =
+            document.getElementById("txttitulo").value.trim();
+
+        clientes[indiceSeleccionado].descripcion =
+            document.getElementById("txtdescripcion").value.trim();
+
+        clientes[indiceSeleccionado].estado =
+            document.getElementById("txtestado").value;
+
+        guardarSession();
+        mostrar();
+        limpiar();
+    }
+
+    function eliminar() {
+        if (indiceSeleccionado === -1) {
+            alert("Seleccione una tarea para eliminar.");
+            return;
+        }
+
+        if (!confirm("¿Desea eliminar la tarea seleccionada?")) return;
+
+        clientes.splice(indiceSeleccionado, 1);
+
+        guardarSession();
+        mostrar();
+        limpiar();
+    }
+
+    function limpiar() {
+        document.getElementById("txttitulo").value = "";
+        document.getElementById("txtdescripcion").value = "";
+        document.getElementById("txtestado").value = "";
+        indiceSeleccionado = -1;
+    }
+
+    function validarDatos() {
+        const titulo = document.getElementById("txttitulo").value.trim();
+        const descripcion = document.getElementById("txtdescripcion").value.trim();
+        const estado = document.getElementById("txtestado").value;
+
+        if (!titulo || !descripcion || !estado) {
+            alert("Complete todos los campos y seleccione un estado.");
+            return false;
+        }
+
+        if (!["En proceso", "Completado"].includes(estado)) {
+            alert("Seleccione un estado válido.");
+            return false;
+        }
+
+        return true;
+    }
+
+
+
+</script>
